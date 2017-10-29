@@ -1,7 +1,7 @@
 FROM ruby:2.4
 
 # Add Ruby dependencies necessary for deployment
-RUN gem install sshkit rake
+RUN gem install sshkit rake openssl
 
 # Install Docker
 RUN apt-get update
@@ -10,7 +10,8 @@ RUN apt-get install -y \
      ca-certificates \
      curl \
      gnupg2 \
-     software-properties-common
+     software-properties-common \
+     openssl
 RUN curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg | apt-key add -
 
 RUN add-apt-repository \
@@ -21,11 +22,9 @@ RUN add-apt-repository \
 RUN apt-get update
 RUN apt-get install -y docker-ce
 
-# Set the working directory to /app
-RUN mkdir /app
 RUN mkdir /deploy
 WORKDIR /deploy
 ADD . /deploy
 RUN chmod +x deploy.sh
 
-CMD ./deploy.sh
+CMD eval $DEPLOY_COMMAND

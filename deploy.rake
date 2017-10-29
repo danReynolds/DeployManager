@@ -24,8 +24,9 @@ server = SSHKit::Host.new hostname: ENV['SERVER_HOST'], user: ENV['SERVER_USER']
 
 namespace :deploy do
   desc 'Copy to server files needed to run and manage Docker containers'
-  task :configs do
+  task configs: 'docker:decrypt' do
     on server do
+      upload! '/app/.env', deploy_path
       deploy_config['remote_files'].each do |file|
         upload! "/app/#{file}", deploy_path
       end
@@ -35,7 +36,7 @@ end
 
 namespace :docker do
   desc 'Build the docker container'
-  task :build do
+  task build: :decrypt do
     run_locally do
       within '/app' do
         execute "cd /app; docker build -f #{deploy_config['dockerfile']} -t #{hub_account}/#{app_name}:#{deploy_tag} ."
@@ -44,7 +45,7 @@ namespace :docker do
   end
 
   desc 'Upload the docker to docker hub'
-  task push: 'docker:login_local' do
+  task push: :login_local do
     run_locally do
       within '/app' do
         execute "docker push #{hub_account}/#{app_name}:#{deploy_tag}"
@@ -80,13 +81,9 @@ namespace :docker do
   end
 
   desc 'Decrypt the latest environment variables to .env'
-  task decrypt: 'deploy:configs' do
-    on server do
-      within deploy_path do
-        with deploy_tag: deploy_tag, env_key: env_key do
-          execute 'docker-compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.production.yml', 'run', 'app', 'rake', 'secrets:decrypt'
-        end
-      end
+  task :decrypt do
+    run_locally do
+      execute 'rake secrets:decrypt'
     end
   end
 
@@ -95,7 +92,7 @@ namespace :docker do
     on server do
       within deploy_path do
         with deploy_tag: deploy_tag do
-          execute 'docker-compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.production.yml', 'down'
+          execute 'docker-compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.production.yml', 'down', '--remove-orphans'
         end
       end
     end
@@ -117,8 +114,8 @@ namespace :docker do
   end
 
   desc 'pulls images, stops old containers and starts new containers'
-  task deploy: %w{docker:pull docker:decrypt docker:stop docker:start}
+  task deploy: %w{docker:pull docker:stop docker:start}
 
   desc 'builds from local, pushes to hub, pulls images, stops old containers and starts new containers'
-  task build_deploy: %w{docker:build docker:push docker:pull docker:decrypt docker:stop docker:start}
+  task build_deploy: %w{docker:build docker:push docker:pull docker:stop docker:start}
 end
