@@ -25,6 +25,5 @@ RUN apt-get install -y docker-ce
 RUN mkdir /deploy
 WORKDIR /deploy
 ADD . /deploy
-RUN chmod +x deploy.sh
 
 CMD eval $DEPLOY_COMMAND

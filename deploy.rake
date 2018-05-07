@@ -19,6 +19,15 @@ app_name = deploy_config['app_name']
 
 hub_account = deploy_config['hub_account']
 
+# Commands to run in the image before it is started
+pre_commands = deploy_config['pre'] || []
+
+# Commands to run in the image after it is started
+post_commands = deploy_config['post'] || []
+
+# Files to copy to the production environment
+remote_files = deploy_config['remote_files'] || []
+
 # connect to server
 server = SSHKit::Host.new hostname: ENV['SERVER_HOST'], user: ENV['SERVER_USER'], password: ENV['SERVER_PASS']
 
@@ -98,6 +107,32 @@ namespace :docker do
     end
   end
 
+  desc 'Runs all commands specified in the pre'
+  task :pre do
+    on server do
+      within deploy_path do
+        with deploy_tag: deploy_tag do
+          pre_commands.each do |command|
+            execute 'docker-compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.production.yml', 'run', 'app', "#{command}"
+          end
+        end
+      end
+    end
+  end
+
+  desc 'Runs all commands specified in the post'
+  task :post do
+    on server do
+      within deploy_path do
+        with deploy_tag: deploy_tag do
+          post_commands.each do |command|
+            execute 'docker-compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.production.yml', 'run', 'app', "#{command}"
+          end
+        end
+      end
+    end
+  end
+
   desc 'Starts all Docker containers via Docker Compose'
   task start: 'deploy:configs' do
     on server do
@@ -114,8 +149,8 @@ namespace :docker do
   end
 
   desc 'pulls images, stops old containers and starts new containers'
-  task deploy: %w{docker:pull docker:stop docker:start}
+  task deploy: %w{docker:pull docker:stop docker:pre docker:start docker:post}
 
   desc 'builds from local, pushes to hub, pulls images, stops old containers and starts new containers'
-  task build_deploy: %w{docker:build docker:push docker:pull docker:stop docker:start}
+  task build_deploy: %w{docker:build docker:push docker:pull docker:stop docker:pre docker:start docker:post}
 end
