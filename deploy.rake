@@ -36,7 +36,7 @@ namespace :deploy do
   task configs: 'docker:decrypt' do
     on server do
       upload! '/app/.env', deploy_path
-      deploy_config['remote_files'].each do |file|
+      remote_files.each do |file|
         upload! "/app/#{file}", deploy_path
       end
     end
