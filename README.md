@@ -22,7 +22,7 @@ remote_files:
 * dockerfile: Dockerfile to use as base for the image created
 * remote files: Files to copy to the remote server in the application directory
 
-## Usage
+## Deployment Usage
 
 To run the deploymanager, create a script such as:
 
@@ -41,9 +41,15 @@ if [ -z "${DEPLOY_TAG}" ]; then
   return
 fi
 
-docker run -e DEPLOY_COMMAND="$DEPLOY_COMMAND" -e DEPLOY_TAG=$DEPLOY_TAG -e ENV_KEY=$ENV_KEY -v $PWD:/app:rw -v /var/run/docker.sock:/var/run/docker.sock --env-file .env danreynolds/deploymanager:0.0.24
+docker run -e DEPLOY_COMMAND="$DEPLOY_COMMAND" -e DEPLOY_TAG=$DEPLOY_TAG -e ENV_KEY=$ENV_KEY -v $PWD:/app:rw -v /var/run/docker.sock:/var/run/docker.sock --env-file .env danreynolds/deploymanager:version
 ```
 
 Where `ENV_KEY` is a required environment variable used in the application and `DEPLOY_TAG` is the tag to be used for the docker image being built and or deployed.
 
 Takes one argument `DEPLOY_COMMAND` which will be executed in the deploy container environment.
+
+## Decryption Usage
+
+```
+sudo docker run -e DEPLOY_COMMAND="rake secrets:decrypt" -e ENV_KEY="YOUR_KEY" -v $PWD:/app:rw -v /var/run/docker.sock:/var/run/docker.sock danreynolds/deploymanager:version
+```
