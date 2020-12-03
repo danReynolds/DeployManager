@@ -1,4 +1,5 @@
 require 'openssl'
+require 'io/console'
 
 namespace :secrets do
   desc 'decrypt secrets and store in .env'
@@ -18,7 +19,7 @@ namespace :secrets do
       decipher.key = key
     else
       while true do
-        key = IO.console.getpass('Secrets key (Empty to skip): ')
+        key = IO::console.getpass('Secrets key (Empty to skip): ')
         begin
           decipher.key = key
           ENV['ENV_KEY'] = key

@@ -141,8 +141,8 @@ namespace :docker do
           execute 'docker-compose', '-f', 'docker-compose.yml', '-f', 'docker-compose.production.yml', 'up', '-d'
 
           # Remove the old image and write the new deploy tag to a log file
-          execute 'echo', deploy_tag , '>', 'deploy.tag'
           execute 'docker', 'rmi', "#{hub_account}/#{app_name}:$(cat deploy.tag)"
+          execute 'echo', deploy_tag , '>', 'deploy.tag'
         end
       end
     end
